@@ -1,1 +1,1 @@
-from utils.setup_env import *
+from kaggle_utils.setup_env import *
