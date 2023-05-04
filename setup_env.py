@@ -1,12 +1,23 @@
+
+def setup_all(data_dir, competition_name):
+    '''
+    setup for Kaggle competition competition_name
+    data_dir: put all data here, it is removed whenever instance terminated
+    competition_name: competition data to download
+    '''
+    _setup_env()
+    _setup_data(data_dir, competition_name)
+
 '''
 use this function to setup a Paperspace Instance
 '''
-def setup_data(data_dir='datap', competition_name='amp-parkinsons-disease-progression-prediction'):
+def _setup_data(data_dir='datap', competition_name='amp-parkinsons-disease-progression-prediction'):
     '''
     # How to download competition data to temp folder(data) 
     # unzip it there, then symlink it like its a subdir
     # NOTE: make sure kaggle.json is in /root/.kaggle/
-    data_loc: put all data here, it is removed whenever instance terminated
+    data_dir: put all data here, it is removed whenever instance terminated
+    competition_name: competition data to download
     '''
     import os
     from os.path import exists
@@ -37,9 +48,11 @@ def setup_data(data_dir='datap', competition_name='amp-parkinsons-disease-progre
     
     #remove zip file
     subprocess.Popen('cd ./datap;rm amp-parkinsons-disease-progression-prediction.zip',shell=True).wait()
+    
+    return True
 
 #run the function this wraps just once
-def run_once(f):
+def _run_once(f):
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
             wrapper.has_run = True
@@ -47,22 +60,26 @@ def run_once(f):
     wrapper.has_run = False
     return wrapper
 
-
 @run_once
-def setup_env(): 
+def _setup_env(): 
     import os
     from os.path import exists
     import subprocess
+    
+    #if there we already ran, bail
+    if exists('./setup.sh'):
+        return
+    
     print('setup environment...')
     
     #get the libraries needed
-    setup_packages()
+    _setup_packages()
         
-    #remove old setup file
-    if exists('./setup.sh'):os.remove('./setup.sh')
-
     #setup dotfiles   
     subprocess.Popen('wget "https://raw.githubusercontent.com/kperkins411/dotfiles/master/setup.sh";',shell=True).wait()
+
+    #remove setup file
+    if exists('./setup.sh'):os.remove('./setup.sh')
 
     #make executable, then run
     print('Running setup.sh...')
@@ -73,7 +90,7 @@ def setup_env():
     os.system('chmod 600 /root/.kaggle/kaggle.json')
  
 @run_once
-def setup_packages():
+def _setup_packages():
     '''
     install needed libraries for this project
     '''
