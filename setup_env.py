@@ -1,17 +1,8 @@
 
-def setup_all(data_dir, competition_name):
-    '''
-    setup for Kaggle competition competition_name
-    data_dir: put all data here, it is removed whenever instance terminated
-    competition_name: competition data to download
-    '''
-    _setup_env()
-    _setup_data(data_dir, competition_name)
-
 '''
 use this function to setup a Paperspace Instance
 '''
-def _setup_data(data_dir='datap', competition_name='amp-parkinsons-disease-progression-prediction'):
+def _setup_data(data_dir, competition_name):
     '''
     # How to download competition data to temp folder(data) 
     # unzip it there, then symlink it like its a subdir
@@ -51,45 +42,49 @@ def _setup_data(data_dir='datap', competition_name='amp-parkinsons-disease-progr
     
     return True
 
-#run the function this wraps just once
-def _run_once(f):
-    def wrapper(*args, **kwargs):
-        if not wrapper.has_run:
-            wrapper.has_run = True
-            return f(*args, **kwargs)
-    wrapper.has_run = False
-    return wrapper
+# #run the function this wraps just once
+# def _run_once(f):
+#     #use @run_once decorator
+#     def wrapper(*args, **kwargs):
+#         if not wrapper.has_run:
+#             wrapper.has_run = True
+#             return f(*args, **kwargs)
+#     wrapper.has_run = False
+#     return wrapper
 
-@run_once
-def _setup_env(): 
+def _setup_env(data_dir): 
+    '''
+    data_dir: symlink, points to where data will go, if exists 
+              then this function has run already this session
+    '''
     import os
     from os.path import exists
     import subprocess
     
     #if there we already ran, bail
-    if exists('./setup.sh'):
+    if os.path.exists(os.readlink(data_dir)):
+        print("_setup_env already run, bailing...")
         return
-    
+   
     print('setup environment...')
     
     #get the libraries needed
     _setup_packages()
         
     #setup dotfiles   
-    subprocess.Popen('wget "https://raw.githubusercontent.com/kperkins411/dotfiles/master/setup.sh";',shell=True).wait()
-
-    #remove setup file
-    if exists('./setup.sh'):os.remove('./setup.sh')
+    subprocess.Popen("wget https://raw.githubusercontent.com/kperkins411/dotfiles/master/setup.sh",shell=True).wait()
 
     #make executable, then run
     print('Running setup.sh...')
     subprocess.Popen('chmod 700 setup.sh; ./setup.sh',shell=True).wait()
-   
+    
+    #remove setup file
+    if exists('./setup.sh'):os.remove('./setup.sh')
+
     #just in case its wide open
     print('Changing key permissions...')
     os.system('chmod 600 /root/.kaggle/kaggle.json')
  
-@run_once
 def _setup_packages():
     '''
     install needed libraries for this project
@@ -110,4 +105,11 @@ def _setup_packages():
         os.system('pip install optuna --quiet')
         import optuna  
         
-    
+def setup_all(data_dir, competition_name):
+    '''
+    setup for Kaggle competition competition_name
+    data_dir: put all data here, it is removed whenever instance terminated
+    competition_name: competition data to download
+    '''
+    _setup_env(data_dir)
+    _setup_data(data_dir, competition_name)  
